@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Builds and outputs
+www/
+dist/
+build/
+android/
+ios/
+
+# Capacitor / Ionic
+plugins/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.*
+
+# Editor
+.idea/
+.vscode/
+.DS_Store
+
+# SQLite data
+lovelingua-api/data/*.db
