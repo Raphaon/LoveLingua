@@ -1,0 +1,8 @@
+:root {
+  --ion-color-primary: #8250df;
+  --ion-color-secondary: #f27ea9;
+}
+
+body {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+}
