@@ -1,0 +1,619 @@
+# 📋 CAHIER DES CHARGES - LOVELINGUA (VERSION IONIC / ANDROID / NODE / SQLITE)
+
+## 📑 TABLE DES MATIÈRES
+
+1. [Présentation du projet](#1-présentation-du-projet)
+2. [Contexte et objectifs](#2-contexte-et-objectifs)
+3. [Périmètre fonctionnel](#3-périmètre-fonctionnel)
+4. [Spécifications fonctionnelles détaillées](#4-spécifications-fonctionnelles-détaillées)
+5. [Spécifications techniques](#5-spécifications-techniques)
+6. [Spécifications design et UX](#6-spécifications-design-et-ux)
+7. [Architecture technique](#7-architecture-technique)
+8. [Contraintes et exigences](#8-contraintes-et-exigences)
+9. [Livrables](#9-livrables)
+10. [Planning et phases](#10-planning-et-phases)
+11. [Métriques de succès](#11-métriques-de-succès)
+12. [Évolutions futures](#12-évolutions-futures)
+13. [Annexes](#13-annexes)
+14. [Validation et signatures](#14-validation-et-signatures)
+
+---
+
+## 1. PRÉSENTATION DU PROJET
+
+### 1.1 Nom du projet
+
+**LoveLingua** – Application mobile des 5 langages de l'amour
+
+### 1.2 Slogan
+
+*"Le Duolingo de l'amour - Apprenez à aimer et être aimé"*
+
+### 1.3 Description synthétique
+
+LoveLingua devient une **application mobile hybride Android** développée avec **Ionic / Angular**.
+Elle permet aux utilisateurs de :
+
+* découvrir leur langage d'amour principal parmi les 5 langages théorisés par Gary Chapman ;
+* obtenir des conseils personnalisés ;
+* renforcer leur relation de couple via des outils gamifiés.
+
+L’application fonctionne :
+
+* **en local** (données utilisateur, résultats, progression) grâce à **SQLite** et **localStorage / Ionic Storage** ;
+* avec un **backend Node.js** (API REST) pour les fonctionnalités connectées :
+
+  * mode couple synchronisé,
+  * quiz partenaire,
+  * mode multijoueur,
+  * synchronisation et sauvegarde distante (optionnelle).
+
+### 1.4 Public cible
+
+* **Primaire** : Couples en relation (18–45 ans)
+* **Secondaire** : Célibataires souhaitant mieux se connaître
+* **Tertiaire** : Personnes en thérapie de couple
+
+### 1.5 Problématique
+
+* Manque de communication dans les couples
+* Incompréhension des besoins émotionnels du partenaire
+* Absence d'outils ludiques sur **mobile** pour renforcer la relation
+* Difficultés à exprimer et recevoir l'amour
+
+### 1.6 Solution proposée
+
+Une application mobile Android combinant :
+
+* Quiz personnalisé sur les 5 langages d'amour
+* Suggestions de gestes adaptés au profil
+* Mode couple avec gamification (réservoir d'amour, quêtes)
+* Questions pour conversations profondes
+* Outils de suivi et progression (XP, niveaux, streaks)
+
+---
+
+## 2. CONTEXTE ET OBJECTIFS
+
+*(Identique à la version initiale – objectifs business, utilisateurs, KPIs, etc. – non modifiés, juste adaptés implicitement à un contexte **mobile Android**.)*
+
+---
+
+## 3. PÉRIMÈTRE FONCTIONNEL
+
+*(Fonctionnalités MVP, Mode couple, Gamification, Social, Bonus, etc. inchangées. Tout ce qui est fonctionnel reste le même : onboarding, profil, quiz, résultats, dashboard, suggestions, questions, couple, quêtes, XP, quiz partenaire, multijoueur, etc.)*
+
+---
+
+## 4. SPÉCIFICATIONS FONCTIONNELLES DÉTAILLÉES
+
+*(Les flux utilisateur, détails des écrans, exemples de JSON, règles de calcul, etc. restent inchangés. On les garde tels quels pour que Codex ait toutes les règles métiers.)*
+
+---
+
+## 5. SPÉCIFICATIONS TECHNIQUES
+
+*(ADAPTÉ POUR ANDROID + IONIC / ANGULAR + NODE + SQLITE)*
+
+### 5.1 Stack technique
+
+#### Mobile / Frontend
+
+* **Framework hybride :**
+
+  * Ionic 7+
+  * Angular 16+ (standalone components si possible)
+* **Runtime mobile :**
+
+  * Capacitor (Android)
+* **Langage :**
+
+  * TypeScript
+* **UI & Styling :**
+
+  * Ionic Components + SCSS
+  * Design system basé sur la charte (couleurs / typographie définies plus bas)
+* **Routing :**
+
+  * Angular Router (routes Ionic standard)
+* **State management (optionnel)** :
+
+  * Signals Angular ou NGXS / NGRX léger (ou `BehaviorSubject` + services)
+* **Build / Android :**
+
+  * `ionic build` + `npx cap sync android`
+  * Compilation via Android Studio (Génération .apk / .aab)
+
+#### Backend Node.js
+
+* **Runtime :** Node.js 20+
+* **Framework API :**
+
+  * Express.js ou NestJS (à définir, mais l’API sera REST)
+* **Langage :** TypeScript (recommandé)
+* **Base de données (backend) :**
+
+  * **SQLite** (fichier `.db` sur le serveur) via ORM / query builder :
+
+    * Prisma / TypeORM / Knex (au choix, mais pensés SQLite-first)
+* **API REST principale :**
+
+  * `/api/couples`
+  * `/api/progress`
+  * `/api/multiplayer`
+  * `/api/partner-quiz`
+* **Auth (V1)** :
+
+  * Simple `userId` généré côté app et envoyé en header ou paramètre (pas de login/mot de passe pour le MVP).
+  * Possibilité d’ajouter un token simple par device.
+
+#### Base de données sur l’app (offline)
+
+* **Moteur :**
+
+  * **SQLite embarqué** via plugin Capacitor (ex : `@capacitor-community/sqlite`).
+* **Stockage local (clé/valeur) :**
+
+  * `localStorage` ou **Ionic Storage** (préféré) pour :
+
+    * flags (`hasSeenOnboarding`, etc.),
+    * cache simple,
+    * paramètres.
+
+#### Outils dev
+
+* Gestion de projet : Git / GitHub
+* Lint & format : ESLint, Prettier
+* Tests (optionnel V1) : Jasmine / Karma pour Angular, Jest pour Node
+
+---
+
+### 5.2 Architecture technique (révisée)
+
+#### Vue globale
+
+```text
+┌─────────────────────────────────────────────┐
+│             APP MOBILE ANDROID             │
+│       Ionic + Angular + Capacitor          │
+│   (UI, logique client, cache SQLite)       │
+└───────────────▲────────────────────────────┘
+                │ HTTPS (JSON REST)
+                │
+┌───────────────┴────────────────────────────┐
+│              BACKEND NODE.JS               │
+│   API REST (Express/Nest) + SQLite server  │
+└───────────────▲────────────────────────────┘
+                │
+        (Optionnel : synchronisation future)
+```
+
+* L’app mobile fonctionne **offline-first** :
+
+  * la plupart des données sont lues/écrites dans **SQLite local**.
+* Quand une connexion est disponible, l’app peut :
+
+  * synchroniser certaines entités (couple, sessions multijoueur, progression) avec le backend Node.
+
+#### Communication App → Backend
+
+Exemple générique :
+
+```ts
+// Exemple Angular service
+const response = await this.http.post(
+  `${environment.apiBaseUrl}/api/couples`,
+  body,
+  { headers: { 'Content-Type': 'application/json', 'X-Device-Id': deviceId } }
+);
+```
+
+* `apiBaseUrl` : URL du serveur Node (ex. `https://api.lovelingua.app`).
+* `X-Device-Id` : identifiant de l’appareil / utilisateur généré localement.
+
+---
+
+### 5.3 Base de données (SQLite)
+
+On distingue :
+
+1. **SQLite côté backend (Node)** : persistance centralisée pour les fonctionnalités multi-utilisateurs, couple, multijoueur, etc.
+2. **SQLite côté app (mobile)** : persistance locale pour l’utilisation offline, rapidité, cache.
+
+#### 5.3.1 Schéma SQLite (backend Node)
+
+Exemple de tables minimalistes :
+
+```sql
+-- Utilisateurs (logique côté serveur)
+CREATE TABLE users (
+  id TEXT PRIMARY KEY,
+  first_name TEXT NOT NULL,
+  birth_date TEXT NOT NULL,
+  gender TEXT NOT NULL,
+  relationship_status TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+-- Couples
+CREATE TABLE couples (
+  id TEXT PRIMARY KEY,
+  user1_id TEXT NOT NULL,
+  user1_name TEXT NOT NULL,
+  user2_id TEXT,
+  user2_name TEXT,
+  status TEXT NOT NULL, -- 'waiting' | 'linked'
+  love_reservoir INTEGER NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+-- Résultats de test
+CREATE TABLE test_results (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  date TEXT NOT NULL,
+  scores_json TEXT NOT NULL, -- JSON string { language: score }
+  primary_language TEXT NOT NULL,
+  primary_language_id TEXT NOT NULL
+);
+
+-- Progression utilisateur
+CREATE TABLE user_progress (
+  user_id TEXT PRIMARY KEY,
+  level INTEGER NOT NULL,
+  current_level_xp INTEGER NOT NULL,
+  next_level_xp INTEGER NOT NULL,
+  total_xp INTEGER NOT NULL,
+  stats_json TEXT NOT NULL -- JSON {quizCompleted, questsCompleted, daysStreak, lastActivity}
+);
+
+-- Sessions multijoueur
+CREATE TABLE sessions (
+  id TEXT PRIMARY KEY,
+  data_json TEXT NOT NULL
+);
+
+-- Partner quiz sessions
+CREATE TABLE partner_quiz_sessions (
+  id TEXT PRIMARY KEY,
+  data_json TEXT NOT NULL
+);
+```
+
+> Remarque : pour garder de la flexibilité, certaines colonnes sont des **JSON sérialisés** (strings) qui peuvent être parsés côté Node.
+
+#### 5.3.2 SQLite / Storage côté application mobile
+
+Sur l’app, on a un schéma simplifié/optimisé pour usage offline :
+
+* Table `local_user_profile`
+* Table `local_test_results`
+* Table `local_couple`
+* Table `local_user_progress`
+* Table `local_quests`
+* Table `local_favorites` (suggestions / questions)
+
+`localStorage` / Ionic Storage garde des flags et paramètres simples :
+
+```ts
+// Clés principales
+'hasSeenOnboarding'        // 'true' | undefined
+'user_id'                  // string
+'user_profile'             // JSON(UserProfile)
+'favorite_suggestions'     // JSON(string[])
+'favorite_questions'       // JSON(string[])
+'cached_couple_data'       // JSON(CoupleData)
+'user_progress'            // JSON(UserProgress)
+'cached_user_progress'     // JSON(UserProgress)
+```
+
+---
+
+### 5.4 Types TypeScript (inchangés / réutilisés)
+
+Les interfaces `UserProfile`, `TestResult`, `CoupleData`, `UserProgress` restent valides, mais sont maintenant utilisées :
+
+* côté **mobile** (Ionic / Angular),
+* côté **backend Node**.
+
+*(On garde exactement les mêmes interfaces que dans la version initiale pour que Codex puisse les réutiliser.)*
+
+---
+
+### 5.5 Routes API (backend Node)
+
+**Prefix général :** `/api`
+
+Exemple de routes REST :
+
+```txt
+POST   /api/couples                → Créer un couple (user1)
+GET    /api/couples/:coupleId      → Récupérer données couple
+POST   /api/couples/:coupleId/join → Rejoindre couple (user2)
+POST   /api/couples/:coupleId/update-result   → Mettre à jour résultats quiz couple
+POST   /api/couples/:coupleId/complete-quest  → Valider une quête
+
+GET    /api/progress/:userId       → Récupérer progression utilisateur
+POST   /api/progress/:userId/add-xp → Ajouter du XP
+
+POST   /api/multiplayer/create           → Créer session multijoueur
+GET    /api/multiplayer/:sessionId       → Récupérer session
+POST   /api/multiplayer/:sessionId/join  → Rejoindre
+POST   /api/multiplayer/:sessionId/question → Ajouter question
+POST   /api/multiplayer/:sessionId/message  → Envoyer message
+
+POST   /api/partner-quiz/create          → Créer session quiz partenaire
+GET    /api/partner-quiz/:sessionId      → Récupérer session
+POST   /api/partner-quiz/:sessionId/join → Rejoindre
+POST   /api/partner-quiz/:sessionId/answer → Répondre
+```
+
+* Format de réponse : JSON
+* Codes HTTP standard (200, 201, 400, 404, 500, etc.).
+
+---
+
+### 5.6 Performance & optimisation mobile
+
+Cibles :
+
+* **Temps de lancement app** : < 2 s sur appareil milieu de gamme
+* **Temps de navigation entre pages** : quasi instantané (Ionic + cache)
+* **Animations** : fluides à 60 fps sur Android 10+
+
+Optimisations :
+
+* Lazy loading des pages Ionic (`loadChildren` ou standalone lazy).
+* Minimisation du nombre d’appels API (batch, caching SQLite).
+* Préchargement léger des données critiques (profil, dernier test, couple).
+
+---
+
+## 6. SPÉCIFICATIONS DESIGN ET UX
+
+*(Charte graphique, typographies, composants UI, responsive, accessibilité : **inchangés**. On les applique simplement dans des composants Ionic/Angular plutôt que React.)*
+
+---
+
+## 7. ARCHITECTURE TECHNIQUE (MISE À JOUR IONIC / ANGULAR)
+
+### 7.1 Structure des dossiers (mobile)
+
+Exemple de structure pour l’app Ionic / Angular :
+
+```text
+lovelingua-mobile/
+├── android/                  # Projet Android (Capacitor)
+├── ios/                      # (optionnel, futur)
+├── capacitor.config.ts
+├── package.json
+├── tsconfig.json
+├── ionic.config.json
+└── src/
+    ├── app/
+    │   ├── core/
+    │   │   ├── data/
+    │   │   ├── services/
+    │   │   │   ├── quiz.service.ts
+    │   │   │   ├── couple.service.ts
+    │   │   │   ├── progress.service.ts
+    │   │   │   ├── suggestions.service.ts
+    │   │   │   ├── questions.service.ts
+    │   │   │   └── storage.service.ts   # localStorage + SQLite
+    │   │   ├── models/
+    │   │   │   ├── user-profile.model.ts
+    │   │   │   ├── test-result.model.ts
+    │   │   │   ├── couple.model.ts
+    │   │   │   ├── user-progress.model.ts
+    │   │   │   └── quests.model.ts
+    │   │   └── interceptors/
+    │   ├── pages/
+    │   │   ├── onboarding/
+    │   │   ├── profile-setup/
+    │   │   ├── dashboard/
+    │   │   ├── quiz/
+    │   │   ├── results/
+    │   │   ├── suggestions/
+    │   │   ├── conversation-questions/
+    │   │   ├── couple-setup/
+    │   │   ├── couple-comparison/
+    │   │   ├── quest-history/
+    │   │   ├── multiplayer-lobby/
+    │   │   ├── multiplayer-game/
+    │   │   ├── partner-quiz-lobby/
+    │   │   ├── partner-quiz-game/
+    │   │   ├── partner-quiz-results/
+    │   │   ├── shared-wishlist/
+    │   │   ├── emotional-checkin/
+    │   │   ├── digital-coupons/
+    │   │   ├── gratitude-wall/
+    │   │   └── history/
+    │   ├── shared/
+    │   │   └── components/
+    │   │       ├── love-language-badge/
+    │   │       ├── quest-card/
+    │   │       ├── stat-card/
+    │   │       └── header/
+    │   └── app-routing.module.ts
+    ├── assets/
+    │   ├── data/             # JSON, textes statiques
+    │   └── icons/
+    ├── theme/
+    │   └── variables.scss
+    ├── global.scss
+    └── main.ts
+```
+
+### 7.2 Structure du backend Node.js
+
+```text
+lovelingua-api/
+├── package.json
+├── tsconfig.json
+├── src/
+│   ├── server.ts            # bootstrap
+│   ├── config/
+│   │   └── db.ts           # connexion SQLite
+│   ├── routes/
+│   │   ├── couples.routes.ts
+│   │   ├── progress.routes.ts
+│   │   ├── multiplayer.routes.ts
+│   │   └── partner-quiz.routes.ts
+│   ├── controllers/
+│   ├── services/
+│   ├── models/             # ORM / types
+│   └── middlewares/
+└── prisma/ or migrations/   # si ORM utilisé
+```
+
+---
+
+### 7.3 Flows de données
+
+#### Flow quiz (offline-first)
+
+1. User → Page Quiz (Ionic)
+2. Les questions sont chargées depuis un fichier local ou SQLite local.
+3. À la fin :
+
+   * Calcul du résultat côté app,
+   * Sauvegarde dans SQLite local (`local_test_results`),
+   * Optionnel : envoi vers backend `POST /api/progress/:userId/add-xp`.
+
+#### Flow couple (online requis)
+
+1. User A → CoupleSetup page
+
+   * App appelle `POST /api/couples` (Node)
+   * Node crée couple + code + enregistre en SQLite.
+2. User B → CoupleSetup page
+
+   * Saisit code → `POST /api/couples/:id/join`.
+3. Les deux apps récupèrent `GET /api/couples/:id`.
+4. Les quêtes quotidiennes peuvent être générées côté backend ou côté app, puis synchronisées.
+
+---
+
+### 7.4 Sécurité
+
+#### Côté app
+
+* Validation de tous les formulaires (Angular forms).
+* Nettoyage des champs texte (éviter les injections dans logs, etc.).
+* Communication exclusivement en **HTTPS** avec l’API Node.
+
+#### Côté backend Node
+
+* Validation stricte des inputs (schemas type Zod / Joi).
+* Limitation du nombre de requêtes (rate limiting).
+* Logs serveurs des erreurs (sans données sensibles).
+* SQLite protégé en écriture / lecture sur le serveur.
+
+---
+
+## 8. CONTRAINTES ET EXIGENCES
+
+### 8.1 Contraintes techniques (Android)
+
+* **Android** : version 10+
+* Résolutions :
+
+  * Téléphones : 320–1080 px de large
+  * Principale cible : 360x640, 400x800, etc.
+* Perf mobile :
+
+  * Temps de démarrage < 2–3 s
+  * Animations fluides
+  * App responsive portrait (priorité)
+
+### 8.2 Contraintes fonctionnelles spécifiques mobile
+
+* L’app doit fonctionner **hors-ligne** pour :
+
+  * quiz, résultats, suggestions, questions, historique local.
+* Connexion requise pour :
+
+  * mode couple synchronisé,
+  * multijoueur,
+  * quiz partenaire (sync entre deux devices).
+
+---
+
+## 9. LIVRABLES
+
+### 9.1 Code source
+
+* **App mobile Ionic / Angular (Android)**
+
+  * code TS, SCSS, templates Ionic
+  * configuration Capacitor
+* **Backend Node.js**
+
+  * API REST, connexion SQLite
+* **Scripts de build :**
+
+  * `npm run build` (app mobile)
+  * `npm run android` (Capacitor + Android Studio)
+  * `npm run start` (API Node)
+
+### 9.2 Application déployée
+
+* **APK / AAB Android** prêt pour :
+
+  * installation directe
+  * soumission Play Store (phase ultérieure)
+* **Backend Node.js** déployé sur :
+
+  * VPS, Render, Railway, etc.
+  * avec base SQLite accessible au serveur.
+
+---
+
+## 10. PLANNING ET PHASES
+
+*(Phases 1 à 8 identiques, mais maintenant en contexte mobile + API Node. Tu peux garder la même découpe : MVP, mode couple, gamification, social, bonus, polish, déploiement, post-launch.)*
+
+---
+
+## 11. MÉTRIQUES DE SUCCÈS
+
+*(Identiques, simplement mesurés via analytics in-app + logs backend.)*
+
+---
+
+## 12. ÉVOLUTIONS FUTURES
+
+### 12.1 V2.0 Features
+
+* Ajout éventuel d’une **sync avancée** (multi-device) entre SQLite local et backend.
+* Mode Premium (in-app purchase sur Android).
+* Statistiques avancées de couple, contenus IA, accompagnement.
+
+### 12.2 V3.0 Features
+
+* Portage iOS (Capacitor iOS).
+* Notifications push (Firebase Cloud Messaging).
+* Intégration thérapeutes (compte pro) avec tableau de bord Node.
+
+---
+
+## 13. ANNEXES
+
+*(Glossaire, références théoriques et techniques restent les mêmes.)*
+
+---
+
+## 14. VALIDATION ET SIGNATURES
+
+* Cette version du cahier des charges valide :
+
+  * **Stack mobile** : Android + Ionic / Angular
+  * **Backend** : Node.js + SQLite
+  * **Stockage** : SQLite + localStorage/Ionic Storage côté app
+
+---
+
+Si tu veux, prochaine étape, je peux te générer :
+
+* la **structure complète du projet Ionic/Angular** (`ionic start`, arborescence, modules, routes),
+* ou le **squelette du backend Node (Express ou Nest)** avec toutes les routes déjà créées pour LoveLingua.
