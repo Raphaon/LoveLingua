@@ -1,0 +1,7 @@
+{
+  "name": "lovelingua-mobile",
+  "type": "angular",
+  "integrations": {
+    "capacitor": {}
+  }
+}
